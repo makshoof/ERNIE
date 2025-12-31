@@ -34,29 +34,25 @@ export async function POST(request: NextRequest) {
     const base64Image = Buffer.from(arrayBuffer).toString('base64');
     const imageDataUrl = `data:${image.type};base64,${base64Image}`;
 
+    // Log the question for debugging
+    console.log('User question:', question);
+
     // Call Novita API using OpenAI SDK with vision-language model
-    // Using ERNIE-4.5-VL-28B-A3B-Thinking - best for detailed industrial analysis with reasoning
-    // Alternative: 'baidu-ernie-4.5-vl-424b-a47b' for maximum quality (larger model)
     const response = await openai.chat.completions.create({
       model: 'baidu/ernie-4.5-vl-28b-a3b-thinking',
       messages: [
         {
           role: 'system',
-          content: 'You are an expert industrial inspection assistant.'
+          content: 'Answer questions directly. Do not provide general analysis unless asked.'
         },
         {
           role: 'user',
           content: [
             {
               type: 'text',
-              text: `Analyze this image and answer the user's question: "${question}". 
+              text: `Please answer this question about the image: "${question}"
 
-Please provide:
-1. A clear analysis of what you see in the image
-2. Identification of any issues, risks, or concerns
-3. Simple, actionable suggestions for improvement or correction
-
-Be concise but thorough, focusing on practical insights that can help with industrial safety and maintenance.`,
+IMPORTANT: Only answer the question. Do not provide a general description or analysis of the image.`,
             },
             {
               type: 'image_url',
@@ -68,11 +64,15 @@ Be concise but thorough, focusing on practical insights that can help with indus
           ] as Array<{ type: 'text'; text: string } | { type: 'image_url'; image_url: { url: string; detail: 'high' } }>,
         },
       ],
-      max_tokens: 32000,
-      temperature: 0.7,
+      max_tokens: 4000,
+      temperature: 0.3,
     });
 
-    const analysis = response.choices[0]?.message?.content || 'No analysis available';
+    const analysis = response.choices[0]?.message?.content || 'No response available';
+    
+    // Log the response for debugging
+    console.log('AI Response length:', analysis.length);
+    console.log('AI Response preview:', analysis.substring(0, 200));
 
     return NextResponse.json({ analysis });
   } catch (error: any) {
