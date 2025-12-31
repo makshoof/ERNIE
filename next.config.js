@@ -4,6 +4,8 @@ const nextConfig = {
   images: {
     domains: [],
   },
+  // Netlify compatibility
+  output: 'standalone',
 }
 
 module.exports = nextConfig

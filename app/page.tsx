@@ -89,10 +89,17 @@ export default function Home() {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        const errorMsg = errorData.details 
-          ? `${errorData.error}: ${errorData.details}`
-          : errorData.error || 'Failed to analyze image';
+        let errorMsg = 'Failed to analyze image';
+        try {
+          const errorData = await response.json();
+          errorMsg = errorData.details 
+            ? `${errorData.error || 'Error'}: ${errorData.details}`
+            : errorData.error || errorMsg;
+        } catch (parseError) {
+          // If response is not JSON, get text instead
+          const errorText = await response.text();
+          errorMsg = errorText || `Server error (${response.status})`;
+        }
         throw new Error(errorMsg);
       }
 

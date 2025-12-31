@@ -82,12 +82,23 @@ Be concise but thorough, focusing on practical insights that can help with indus
     console.error('Error type:', error?.type);
     console.error('Error param:', error?.param);
     
-    let errorMessage = error?.message || 'Unknown error';
+    let errorMessage = 'Unknown error';
+    
+    // Safely extract error message
+    if (error?.message) {
+      errorMessage = String(error.message);
+    } else if (typeof error === 'string') {
+      errorMessage = error;
+    }
     
     // OpenAI SDK errors have error property
     if (error?.error) {
       console.error('API Error details:', error.error);
-      errorMessage = `${errorMessage} - ${JSON.stringify(error.error)}`;
+      try {
+        errorMessage = `${errorMessage} - ${JSON.stringify(error.error)}`;
+      } catch {
+        errorMessage = `${errorMessage} - ${String(error.error)}`;
+      }
     }
     
     // Handle OpenAI SDK errors
@@ -101,20 +112,34 @@ Be concise but thorough, focusing on practical insights that can help with indus
       errorMessage = `${errorMessage} (Param: ${error.param})`;
     }
     
-    return NextResponse.json(
-      { 
-        error: 'Internal server error', 
-        details: errorMessage,
-        errorInfo: process.env.NODE_ENV === 'development' ? {
-          status: error?.status,
-          code: error?.code,
-          type: error?.type,
-          param: error?.param,
-          error: error?.error
-        } : undefined
-      },
-      { status: 500 }
-    );
+    // Always return JSON response
+    try {
+      return NextResponse.json(
+        { 
+          error: 'Internal server error', 
+          details: errorMessage,
+          errorInfo: process.env.NODE_ENV === 'development' ? {
+            status: error?.status,
+            code: error?.code,
+            type: error?.type,
+            param: error?.param,
+            error: error?.error
+          } : undefined
+        },
+        { 
+          status: error?.status || 500,
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+    } catch (jsonError) {
+      // Fallback if JSON.stringify fails
+      return NextResponse.json(
+        { error: 'Internal server error', details: 'An unexpected error occurred' },
+        { status: 500, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
   }
 }
 
