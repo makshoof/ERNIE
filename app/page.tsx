@@ -298,10 +298,21 @@ export default function Home() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -20 }}
-                    className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-6 text-red-800 dark:text-red-200"
+                    className={`rounded-xl p-6 border ${
+                      error.includes('rate limit') || error.includes('429')
+                        ? 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800 text-yellow-800 dark:text-yellow-200'
+                        : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800 text-red-800 dark:text-red-200'
+                    }`}
                   >
-                    <p className="font-semibold mb-2">Error</p>
+                    <p className="font-semibold mb-2">
+                      {error.includes('rate limit') || error.includes('429') ? 'Rate Limit Reached' : 'Error'}
+                    </p>
                     <p>{error}</p>
+                    {error.includes('rate limit') || error.includes('429') && (
+                      <p className="mt-3 text-sm opacity-90">
+                        💡 Tip: Wait a few minutes and try again. The rate limit will reset automatically.
+                      </p>
+                    )}
                   </motion.div>
                 )}
 
